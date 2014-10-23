@@ -8,8 +8,9 @@
 
 #include "commn.h"
 
-struct mqd_t * init_mq(char *mq_name) {
-	mqd_t mq;
+#define MAX_VNF 10;
+
+void mk_mq(mqd_t *mqp, char *mq_name) {
 	struct mq_attr attr;
 	char buf[BUFSIZE];
 
@@ -18,41 +19,44 @@ struct mqd_t * init_mq(char *mq_name) {
 	attr.mq_maxsize = MQ_MSG_SIZE;
 	attr.mq_curmsgs = 0;
 
-	return (&mq);
+	*mq = mq_open(mq_name, O_CREAT | O_RDWR | O_NONBLOCK, 0644, &attr);
+	CHECK((mqd_t) -1 != *mq);
 }
 
-int mk_tx_mq(struct mqd_t *mq) {
-	mq = mq_open(mq_name, O_CREAT | O_RDONLY, 0644, &attr);
-	CHECK((mqd_t) -1 != mq);
-}
-
-int mk_rx_mq(struct mqd_t *mq) {
-	mq = mq_open(mq_name, O_CREAT | O_WRONLY, 0644, &attr);
-	CHECK((mqd_t) -1 != mq);
-}
-
-int recv_from_nic() {
+int recv_from_nic(char *pkt_buf_ptr) {
+	/* netmap TX injection*/
 
 }
 
-int send_to_nic() {
-
-}
-
-int lookup_next() {
+int send_to_nic(char *pkt_buf_ptr) {
+	/* netmap TX injection*/
 
 }
 
 int main(int argc, char **argv) {
+	mdt_t mq[MAX_VNF];
+	char mq_name[MAX_VNF][7];
+	char *pkt_buf_ptr;
 
-	for(int i =0, i < vnfs, i++){
-		mk_tx_mq();
-		mk_rx_mq();
+	/* create message queues for individual VNF */
+	for(i=0; i < MAX_VNF; i++) {
+		mq_name[i] = atoi(i);
+		mk_mq(&mq[i], mq_name[i]);
 	}
 
 	while(1){
-		if (recv_from_nic()) {
-			
-		}	
+		n = mq_receive(mq, pkt_buf_ptr, MQ_MSG_SIZE, NULL);
+		CHECK(n >= 0);
+
+	        n = mq_send(mq, pkt_buf_ptr, MQ_MSG_SIZE, 0);
+                CHECK(n >= 0);
+
+
+		send_to_nic(pkt_buf_ptr);
 	}
+
+	CHECK((mqd_t)-1 != mq_close(mq));
+	CHECK((mqd_t)-1 != mq_unlink(mq_name));
+
+	return 0;
 }
